@@ -1,131 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Demo PyScript</title>
+  <title>HandTrack Game Controller</title>
+  <link rel="icon" type="image/png" href="../favicon.png" />
+  <link rel="stylesheet" href="../../build/pyscript.css" />
+  <script defer src="../../build/pyscript.js"></script>
 
-    <link rel="icon" type="image/png" href="../favicon.png" />
-    <link rel="stylesheet" href="../../build/pyscript.css" />
-    
-    <script defer src="../../build/pyscript.js"></script>
-  </head>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+    }
 
-  <body>
-    <script type="text/javascript" src="js/util.js"></script>
-    <script type="text/javascript" src="js/input.js"></script>
-    <script type="text/javascript" src="js/resources.js"></script>
-    <script type="text/javascript" src="js/sprite.js"></script>
-    <script type="text/javascript" src="js/entity.js"></script>
-    <script type="text/javascript" src="js/pipe.js"></script>
-    <script type="text/javascript" src="js/mushroom.js"></script>
-    <script type="text/javascript" src="js/fireflower.js"></script>
-    <script type="text/javascript" src="js/star.js"></script>
-    <script type="text/javascript" src="js/fireball.js"></script>
-    <script type="text/javascript" src="js/coin.js"></script>
-    <script type="text/javascript" src="js/bcoin.js"></script>
-    <script type="text/javascript" src="js/goomba.js"></script>
-    <script type="text/javascript" src="js/koopa.js"></script>
-    <script type="text/javascript" src="js/floor.js"></script>
-    <script type="text/javascript" src="js/block.js"></script>
-    <script type="text/javascript" src="js/rubble.js"></script>
-    <script type="text/javascript" src="js/prop.js"></script>
-    <script type="text/javascript" src="js/player.js"></script>
-    <script type="text/javascript" src="js/flag.js"></script>
-    <script type="text/javascript" src="js/levels/level.js"></script>
-    <script type="text/javascript" src="js/levels/11.js"></script>
-    <script type="text/javascript" src="js/levels/11tunnel.js"></script>
-    <script type="text/javascript" src="js/game.js"></script>
+    header {
+      background-color: #4a90e2;
+      color: white;
+      padding: 20px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
 
-    <py-script>
-from js import handTrack, setTimeout, requestAnimationFrame, player
-from pyodide import create_once_callable
-import asyncio
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+      width: 100%;
+      max-width: 800px;
+    }
 
-context = canvas.element.getContext("2d")
+    video, canvas {
+      border: 2px solid #4a90e2;
+      border-radius: 8px;
+      max-width: 100%;
+    }
 
-isVideo = False
-model = None
-last_position = 0
-direction = "stop"
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
 
-modelParams = {
-  "flipHorizontal": True, # flip e.g for video
-  "maxNumBoxes": 20, # maximum number of boxes to detect
-  "iouThreshold": 0.5, # ioU threshold for non-max suppression
-  "scoreThreshold": 0.6, # confidence threshold for predictions.
-}
+    button:hover {
+      background-color: #357ab7;
+    }
 
-def toggle_video(evt):
-  global isVideo
-  player.jump()
+    #update_note {
+      font-size: 16px;
+      color: #333;
+    }
+  </style>
+</head>
 
-  if (not isVideo):
-    update_note.write("Starting video")
-    pyscript.run_until_complete(start_video())
-  else:
-    update_note.write("Stopping video")
-    handTrack.stopVideo(video.element)
-    isVideo = False
-    update_note.write("Video stopped")
-  
-async def start_video():
-  global isVideo
-  update_note.write("Inside sstart video")
-  status = await handTrack.startVideo(video.element)
-  console.log("video started", status)
-  if status:
-    update_note.write("Video started. Now tracking")
-    isVideo = True
-    console.log( "Calling RUN DETECTION")
-    y = await run_detection()
-  else:
-    update_note.write( "Please enable video")
+<body>
+  <header>
+    <h1>Hand Tracking Game Control</h1>
+    <p>Use your hand gestures to control the game!</p>
+  </header>
 
-def sync_run_detection(evt):
-  pyscript.run_until_complete(run_detection())
+  <main>
+    <button onclick="toggle_video()">Start/Stop Video</button>
+    <video id="video" width="600" height="400" autoplay></video>
+    <canvas id="canvas" width="600" height="400"></canvas>
+    <p id="update_note">Initializing...</p>
+  </main>
 
-async def run_detection():
-  global model
-  global isVideo
-  global last_position
-  global direction
-  
-  predictions = await model.detect(video.element)
-  model.renderPredictions(predictions, canvas.element, context, video.element);
+  <!-- Game logic JavaScript files -->
+  <script src="js/util.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/resources.js"></script>
+  <script src="js/sprite.js"></script>
+  <script src="js/entity.js"></script>
+  <script src="js/pipe.js"></script>
+  <script src="js/mushroom.js"></script>
+  <script src="js/fireflower.js"></script>
+  <script src="js/star.js"></script>
+  <script src="js/fireball.js"></script>
+  <script src="js/coin.js"></script>
+  <script src="js/bcoin.js"></script>
+  <script src="js/goomba.js"></script>
+  <script src="js/koopa.js"></script>
+  <script src="js/floor.js"></script>
+  <script src="js/block.js"></script>
+  <script src="js/rubble.js"></script>
+  <script src="js/prop.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/flag.js"></script>
+  <script src="js/levels/level.js"></script>
+  <script src="js/levels/11.js"></script>
+  <script src="js/levels/11tunnel.js"></script>
+  <script src="js/game.js"></script>
 
-  if predictions:
-    curr_position = predictions[0].bbox[0] + (predictions[0].bbox[2] / 2)
-    delta = last_position - curr_position
-    last_position = curr_position
-    #console.log(delta, curr_position, last_position)
-    if abs(delta) < 2:
-      direction = "stop"
-    elif delta > 0:
-      direction = "left"
-    else:
-      direction = "right"
-
-    for prediction in predictions:
-      if prediction.label == 'open':
-        player.jump()
-      elif prediction.label == 'close':
-        player.crouch()
-
-  if (isVideo):
-    await requestAnimationFrame(create_once_callable(sync_run_detection));
-
-def handle_model(lmodel):
-  global model
-  model = lmodel
-  update_note.write("Loaded Model!")
-
-async def start():
-  model = await handTrack.load(modelParams)#.then(handle_model)
-  handle_model(model)
-
-pyscript.run_until_complete(start())
-
-    </py-script>
+  <!-- Link đến file mã Python riêng -->
+  <py-script src="main.py"></py-script>
+</body>
 </html>
